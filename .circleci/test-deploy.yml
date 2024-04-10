@@ -10,7 +10,7 @@ orbs:
 # even though the downstream publish job will only run on release tags.
 filters: &filters
   tags:
-    only: /.*/
+    only: /.alpha*/
 
 # Filter for release tags.
 release-filters: &release-filters

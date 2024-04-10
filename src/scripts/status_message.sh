@@ -5,7 +5,7 @@ CURRENT_BRANCH_IN_FILTER=false
 IFS="," read -ra BRANCH_FILTERS <<< "${ONLY_FOR_BRANCHES}"
 echo "Branch Filters: ${BRANCH_FILTERS[*]}" # Debugging message
 
-for i in "${BRANCH_FILTERS[*]}"; do
+for i in ${BRANCH_FILTERS[*]}; do
   if [ "${i}" == "${CIRCLE_BRANCH}" ]; then
     CURRENT_BRANCH_IN_FILTER=true
   fi

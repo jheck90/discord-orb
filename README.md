@@ -1,3 +1,5 @@
+## Forked from teka23/discord-orb which hasn't been updated since 2020
+
 # Discord Orb
 
 Easily integrate custom [Discord](https://discord.com/ "Discord") notifications into your [CircleCI](https://circleci.com/ "CircleCI") projects. Create custom alert messages for any job or receive status updates.
@@ -11,7 +13,7 @@ Example config:
 version: 2.1
 
 orbs:
-  discord: teka23/discord@x.y.z/*
+  discord: jheck90/discord@x.y.z/*
 
 jobs:
   build:
@@ -21,7 +23,7 @@ jobs:
       - discord/<command>
 ```
 
-`discord@1.0.0` from the `teka23` namespace is imported into the config.yml as `discord` and can then be referenced as such in any job or workflow.
+`discord@1.0.0` from the `jheck90` namespace is imported into the config.yml as `discord` and can then be referenced as such in any job or workflow.
 
 ## Dependencies / Requirements
 
@@ -51,7 +53,7 @@ You can implement the Webhook in one of two ways, either as an environment varia
 2. You can enter the Webhook for the individual status or alert by entering it at the `webhook` parameter, as shown above.
 
 ## Contributing
-We welcome [issues](https://github.com/teka23/discord-orb/issues) to and [pull requests](https://github.com/teka23/discord-orb/pulls) against this repository! For further questions/comments about this or other orbs, visit [CircleCI's Orbs discussion forum](https://discuss.circleci.com/c/ecosystem/orbs).
+We welcome [issues](https://github.com/jheck90/discord-orb/issues) to and [pull requests](https://github.com/jheck90/discord-orb/pulls) against this repository! For further questions/comments about this or other orbs, visit [CircleCI's Orbs discussion forum](https://discuss.circleci.com/c/ecosystem/orbs).
 
 ## License
 This project is licensed under the MIT License - read [LICENSE](LICENSE) file for details.

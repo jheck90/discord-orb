@@ -9,7 +9,7 @@ else
   echo "Webhook: ${WEBHOOK}" # Debugging message
   echo "Notifying Discord Channel" # Debugging message
   
-  #Create Members string
+  # Create Members string
   if [ -n "${MENTIONS}" ]; then
     IFS="," read -ra DISCORD_MEMBERS <<< "${MENTIONS}"
     for i in "${DISCORD_MEMBERS[@]}"; do
@@ -22,40 +22,26 @@ else
   fi
   echo "Message: ${MESSAGE} ${DISCORD_MENTIONS}" # Debugging message
   
+  # Prepare JSON data without using sed
+  author=$(jq -n --arg name "${AUTHOR_NAME}" --arg url "${AUTHOR_LINK}" --arg icon "${AUTHOR_ICON}" '{$name, $url, $icon}')
+  fields="["
+  if [[ "${INCLUDE_PROJECT_FIELD}" == "true" ]]; then
+    fields+="$(jq -n --arg project "${CIRCLE_PROJECT_REPONAME}" '{$name: "Project", $value: $project, $inline: true}')"
+    if [[ "${INCLUDE_JOB_NUMBER_FIELD}" == "true" ]]; then
+      fields+=","
+    fi
+  fi
+  if [[ "${INCLUDE_JOB_NUMBER_FIELD}" == "true" ]]; then
+    fields+="$(jq -n --arg jobNumber "${CIRCLE_BUILD_NUM}" '{$name: "Job Number", $value: $jobNumber, $inline: true}')"
+  fi
+  fields+="]"
+  embed=$(jq -n --argjson author "$author" --arg title "${TITLE}" --arg url "${TITLE_LINK}" --arg message "${MESSAGE} ${CIRCLE_BUILD_URL}" --arg color "${COLOR}" --argjson fields "$fields" --arg ts "${TS}" --arg footer "${FOOTER}" '{$author, $title, $url, $description: $message, $color, $fields, $timestamp: $ts, $footer}')
+
+  # Send the request
   curl -X POST -H 'Content-type: application/json' \
     --data \
-      "{
-        \"content\": \"$(echo "${MESSAGE} ${DISCORD_MENTIONS}" | sed 's/"/\\"/g')\",
-        \"embeds\": [{
-          \"author\": {
-            \"name\": \"${AUTHOR_NAME}\",
-            \"url\": \"${AUTHOR_LINK}\",
-            \"icon_url\": \"${AUTHOR_ICON}\"
-          },
-          \"title\": \"${TITLE}\",
-          \"url\": \"${TITLE_LINK}\",
-          \"description\": \"${MESSAGE} ${CIRCLE_BUILD_URL}\",
-          \"color\": \"${COLOR}\",
-          \"fields\": [
-            $(if [[ "${INCLUDE_PROJECT_FIELD}" == "true" ]]; then
-              echo "{
-                \"name\": \"Project\",
-                \"value\": \"${CIRCLE_PROJECT_REPONAME}\",
-                \"inline\": true
-              }$(if [[ "${INCLUDE_JOB_NUMBER_FIELD}" == "true" ]]; then echo ","; fi)"
-            fi)
-            $(if [[ "${INCLUDE_JOB_NUMBER_FIELD}" == "true" ]]; then
-              echo "{
-                \"name\": \"Job Number\",
-                \"value\": \"${CIRCLE_BUILD_NUM}\",
-                \"inline\": true
-              }"
-            fi)
-          ],
-          \"timestamp\": \"${TS}\",
-          \"footer\": {
-            \"text\": \"${FOOTER}\"
-          }
-        }]
-      }" "${WEBHOOK}"
+    "{
+      \"content\": \"${MESSAGE} ${DISCORD_MENTIONS}\",
+      \"embeds\": [$embed]
+    }" "${WEBHOOK}"
 fi

@@ -51,10 +51,8 @@ parameters:
 
 steps:
   - run:
-      name: Provide error if curl is not installed.
-      command: |
-        which curl > curl_exists; echo $? | grep -q '1' && echo curl not installed && rm curl_exists && exit 1
-        rm curl_exists
+      name: Provide error if cURL is not installed.
+      command: <<include(scripts/verify_curl.sh)>>
 
   - run:
       name: Discord - Setting Failure Condition
@@ -70,120 +68,22 @@ steps:
 
   - run:
       name: Provide error if non-bash shell
-      command: |
-        if [ ! -x /bin/bash ]; then
-          echo Bash not installed.
-          exit 1
-        fi
+      command: <<include(scripts/verify_bash.sh)>>
 
   - run:
-      name: Discord - Sending Status Alert
-      shell: /bin/bash
-      when: always
-      command: |
-        current_branch_in_filter=false
-
-        IFS="," read -ra BRANCH_FILTERS \<<< "<< parameters.only_for_branches >>"
-
-        for i in "${BRANCH_FILTERS[@]}"; do
-          if [ "${i}" == "${CIRCLE_BRANCH}" ]; then
-            current_branch_in_filter=true
-          fi
-        done
-
-        if [ "x" == "x<< parameters.only_for_branches>>" ] || [ "$current_branch_in_filter" = true ]; then
-          # Provide error if no webhook is set and error. Otherwise continue
-          if [ -z "<< parameters.webhook >>" ]; then
-            echo "NO DISCORD WEBHOOK SET"
-            echo "Please input your DISCORD_WEBHOOK value either in the settings for this project, or as a parameter for this orb."
-            exit 1
-          else
-            #If successful
-            if [ "$DISCORD_BUILD_STATUS" = "success" ]; then
-              #Skip if fail_only
-              if [ << parameters.fail_only >> = true ]; then
-                echo "The job completed successfully"
-                echo '"fail_only" is set to "true". No Discord notification sent.'
-              else
-                #Create Members string
-                if [ -n "<< parameters.success_mentions >>" ]; then
-                  IFS="," read -ra DISCORD_MEMBERS \<<< "<< parameters.success_mentions >>"
-                  DISCORD_MENTIONS=""
-                  for i in "${DISCORD_MEMBERS[@]}"; do
-                    if echo ${i} | grep -E "^(here|everyone)$" > /dev/null; then
-                      DISCORD_MENTIONS="${DISCORD_MENTIONS}@${i} "
-                    else
-                      DISCORD_MENTIONS="${DISCORD_MENTIONS}<@${i}> "
-                    fi
-                  done
-                fi
-                curl -X POST -H 'Content-type: application/json' \
-                  --data \
-                    "{ \
-                      \"content\": \"<< parameters.success_message >> $DISCORD_MENTIONS\", \
-                      \"embeds\": [{ \
-                        \"description\": \"<< parameters.success_message >> $CIRCLE_BUILD_URL\", \
-                        \"color\": \"1883971\", \
-                        \"fields\": [ \
-                          { \
-                            \"name\": \"Project\", \
-                            \"value\": \"$CIRCLE_PROJECT_REPONAME\", \
-                            \"inline\": true \
-                          }, \
-                          { \
-                            \"name\": \"Job Number\", \
-                            \"value\": \"$CIRCLE_BUILD_NUM\", \
-                            \"inline\": true \
-                          } \
-                        ] \
-                      }] \
-                    }" << parameters.webhook >>
-                echo "Job completed successfully. Alert sent."
-              fi
-            else
-              #If Failed
-
-              #Skip if success_only
-              if [ << parameters.success_only >> = true ]; then
-                echo "The job failed"
-                echo '"success_only" is set to "true". No Discord notification sent.'
-              else
-                if [ -n "<< parameters.failure_mentions >>" ]; then
-                  IFS="," read -ra DISCORD_MEMBERS \<<< "<< parameters.failure_mentions >>"
-                  DISCORD_MENTIONS=""
-                  for i in "${DISCORD_MEMBERS[@]}"; do
-                    if echo ${i} | grep -E "^(here|everyone)$" > /dev/null; then
-                      DISCORD_MENTIONS="${DISCORD_MENTIONS}@${i} "
-                    else
-                      DISCORD_MENTIONS="${DISCORD_MENTIONS}<@${i}> "
-                    fi
-                  done
-                fi
-                curl -X POST -H 'Content-type: application/json' \
-                  --data \
-                    "{ \
-                      \"content\": \"<< parameters.failure_message >> $DISCORD_MENTIONS\", \
-                      \"embeds\": [{ \
-                        \"description\": \"<< parameters.failure_message >> $CIRCLE_BUILD_URL\", \
-                        \"color\": \"15555676\", \
-                        \"fields\": [ \
-                          { \
-                            \"name\": \"Project\", \
-                            \"value\": \"$CIRCLE_PROJECT_REPONAME\", \
-                            \"inline\": true \
-                          }, \
-                          { \
-                            \"name\": \"Job Number\", \
-                            \"value\": \"$CIRCLE_BUILD_NUM\", \
-                            \"inline\": true \
-                          } \
-                        ] \
-                      }] \
-                    }" << parameters.webhook >>
-                echo "Job failed. Alert sent."
-              fi
-            fi
-          fi
-        else
-          echo "Current branch is not included in only_for_branches filter; no status alert will be sent"
-        fi
+    name: Discord - Sending Status Alert
+    when: always
+    command: <<include(scripts/status_message.sh)>>
+    environment:
+      WEBHOOK: <<parameters.webhook>>
+      ONLY_FOR_BRANCHES: <<parameters.only_for_branches>>
+      DISCORD_BUILD_STATUS: <<parameters.discord_build_status>>
+      FAIL_ONLY: <<parameters.fail_only>>
+      SUCCESS_MENTIONS: <<parameters.success_mentions>>
+      SUCCESS_MESSAGE: <<parameters.success_message>>
+      CIRCLE_BUILD_URL: <<parameters.circle_build_url>>
+      CIRCLE_PROJECT_REPONAME: <<parameters.circle_project_reponame>>
+      CIRCLE_BUILD_NUM: <<parameters.circle_build_num>>
+      SUCCESS_ONLY: <<parameters.success_only>>
+      FAILURE_MENTIONS: <<parameters.failure_mentions>>
+      FAILURE_MESSAGE: <<parameters.failure_message>>

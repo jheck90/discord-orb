@@ -5,6 +5,10 @@ description: >
   Create custom alert messages for any job or receive status updates.
   View this orb's source: https://github.com/jheck90/discord-orb
 
+display:
+  source_url: "https://github.com/jheck90/discord-orb"
+
+
 # Create your here: https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks
 
 ## Requirements ##

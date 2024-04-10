@@ -4,7 +4,7 @@ usage:
   version: 2.1
 
   orbs:
-    discord: teka23/discord@x.y.z
+    discord: jheck90/discord@x.y.z
 
   jobs:
     build:

@@ -54,51 +54,13 @@ steps:
         rm curl_exists
 
   - run:
+      environment:
+        WEBHOOK: <<parameters.webhook>>
+        MESSAGE: <<parameters.message>>
+        COLOR: <<parameters.color>>
+        MENTIONS: <<parameters.mentions>>
+        INCLUDE_PROJECT_FIELD: <<parameters.include_project_field>>
+        INCLUDE_JOB_NUMBER_FIELD: <<parameters.include_job_number_field>>
+        URL: <<parameters.url>>
       name: Discord - Sending Approval Notification
-      shell: /bin/bash
-      command: |
-        # Provide error if no webhook is set and error. Otherwise continue
-        if [ -z "<< parameters.webhook >>" ]; then
-          echo "NO DISCORD WEBHOOK SET"
-          echo "Please input your DISCORD_WEBHOOK value either in the settings for this project, or as a parameter for this orb."
-          exit 1
-        else
-          #Create Members string
-          if [ -n "<< parameters.mentions >>" ]; then
-            IFS="," read -ra DISCORD_MEMBERS \<<< "<< parameters.mentions >>"
-            for i in "${DISCORD_MEMBERS[@]}"; do
-              if echo ${i} | grep -E "^(here|everyone)$" > /dev/null; then
-                DISCORD_MENTIONS="${DISCORD_MENTIONS}@${i} "
-              else
-                DISCORD_MENTIONS="${DISCORD_MENTIONS}<@${i}> "
-              fi
-            done
-          fi
-
-          curl -X POST -H 'Content-type: application/json' \
-            --data \
-              "{ \
-                \"content\": \"<< parameters.message >> $DISCORD_MENTIONS\", \
-                \"embeds\": [{ \
-                  \"description\": \"<< parameters.message >> - << parameters.url >>\", \
-                  \"color\": \"<< parameters.color >>\", \
-                  \"fields\": [ \
-                    <<# parameters.include_project_field >>
-                    { \
-                      \"name\": \"Project\", \
-                      \"value\": \"$CIRCLE_PROJECT_REPONAME\", \
-                      \"inline\": true \
-                    }<<# parameters.include_job_number_field >>,<</ parameters.include_job_number_field >> \
-                    <</ parameters.include_project_field >>
-                    <<# parameters.include_job_number_field >>
-                    { \
-                      \"name\": \"Job Number\", \
-                      \"value\": \"$CIRCLE_BUILD_NUM\", \
-                      \"inline\": true \
-                    } \
-                    <</ parameters.include_job_number_field >>
-                  ] \
-                }] \
-              }" << parameters.webhook >>
-          echo "Awaiting approval notified."
-        fi
+      command: <<include(scripts/approval_message.sh)>>

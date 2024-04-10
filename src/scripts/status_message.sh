@@ -3,9 +3,9 @@
 CURRENT_BRANCH_IN_FILTER=false
 
 IFS="," read -ra BRANCH_FILTERS <<< "${ONLY_FOR_BRANCHES}"
-echo "Branch Filters: ${BRANCH_FILTERS[@]}" # Debugging message
+echo "Branch Filters: ${BRANCH_FILTERS[*]}" # Debugging message
 
-for i in "${BRANCH_FILTERS[@]}"; do
+for i in "${BRANCH_FILTERS[*]}"; do
   if [ "${i}" == "${CIRCLE_BRANCH}" ]; then
     CURRENT_BRANCH_IN_FILTER=true
   fi
@@ -14,7 +14,7 @@ done
 echo "Current Branch: ${CIRCLE_BRANCH}" # Debugging message
 echo "Current Branch in Filter: ${CURRENT_BRANCH_IN_FILTER}" # Debugging message
 
-if [ "x" == "x${ONLY_FOR_BRANCHES}" ] || [ "$CURRENT_BRANCH_IN_FILTER" = true ]; then
+if [ "" == "${ONLY_FOR_BRANCHES}" ] || [ "$CURRENT_BRANCH_IN_FILTER" = true ]; then
   # Provide error if no webhook is set and error. Otherwise continue
   if [ -z "${WEBHOOK}" ]; then
     echo "NO DISCORD WEBHOOK SET"
